@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { SignOut } from "@phosphor-icons/react";
 import Logo from "../assets/Vector.svg";
 
-import { Track } from "../types/Track";
+import { RecentTrack, Track } from "../types/Track";
 
 import Footer from "../components/footer";
 
@@ -13,6 +13,7 @@ export default function Stats() {
   const [token, setToken] = useState("");
 
   const [mostPlayedTracks, setMostReplayedTracks] = useState<Track[]>([])
+  const [recentPlayedTracks, setRecentPlayedTracks] = useState<RecentTrack[]>([]);
 
   const navigate = useNavigate();
 
@@ -48,23 +49,65 @@ export default function Stats() {
       setMostReplayedTracks(data.items);
     }
 
+    const getRecentPlayedTracks = async () => {
+      const { data } = await axios.get("https://api.spotify.com/v1/me/player/recently-played", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          limit: 5,
+        }
+      });
+    
+      setRecentPlayedTracks(data.items);
+    }
+
     if (token) {
       getMostPlayedTracks();
+      getRecentPlayedTracks();
     }
   }, [token]);
 
   const renderMostPlayedTracks = (index: number) => {
     if (!mostPlayedTracks[index] || !mostPlayedTracks[index].album || !mostPlayedTracks[index].album.images[0]) return null;
 
-  return (
-    <div key={mostPlayedTracks[index].id} className="flex flex-row">
-      <img src={mostPlayedTracks[index].album.images[0].url} alt="" className="w-12" />
-      <div className="flex flex-col">
-        <p>{mostPlayedTracks[index].name}</p>
-        <p>{mostPlayedTracks[index].artists[0].name}</p>
+    return (
+      <div key={mostPlayedTracks[index].id} className="flex flex-row">
+        <img
+          src={mostPlayedTracks[index].album.images[0].url}
+          alt=""
+          className="w-12"
+        />
+        <div className="flex flex-col">
+          <p>{mostPlayedTracks[index].name}</p>
+          <p>{mostPlayedTracks[index].artists[0].name}</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+  
+  const renderRecentPlayedTracks = () => {
+    return (
+      <div>
+        {recentPlayedTracks.map((item, index) => {
+          if (!item || !item.track.album || !item.track.name) return null;
+  
+          return (
+            <div key={index} className="flex flex-row">
+              <img
+                src={item.track.album.images[0].url}
+                alt=""
+                className="w-12"
+              />
+              <div className="flex flex-col">
+                <p>{item.track.name}</p>
+                <p>{item.track.artists[0].name}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )
   }
 
   const logout = () => {
@@ -119,6 +162,8 @@ export default function Stats() {
         </div>
         <div className="col-span-2 row-span-1 bg-gray-800"></div>
         <div className="col-span-1 row-span-2 bg-gray-800">
+          <p>Recent played tracks</p>
+          {renderRecentPlayedTracks()}
         </div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
