@@ -1,91 +1,71 @@
-import Track from "../components/track";
-import Footer from "../components/footer";
-import Artist from "../components/artist";
+import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { SignOut } from "@phosphor-icons/react";
 import Logo from "../assets/Vector.svg";
-import getAllTracks from "../utils/tracks/getAllTracks";
-import axios from "axios";
-import getLongTermTracks from "../utils/tracks/getLongTermTracks";
-import getMostPlayedTracks from "../utils/tracks/getMostPlayedTracks";
-import getToken from "../utils/auth/getToken";
 
-interface Album {
-  images: {
-    url: string;
-  }[];
-}
+import { Track } from "../types/Track";
 
-interface Artist {
-  name: string;
-}
-
-interface Track {
-  id: string;
-  name: string;
-  album: Album;
-  artists: Artist[];
-}
-
-interface RecentTrackItem {
-  track: Track;
-}
+import Footer from "../components/footer";
 
 export default function Stats() {
   const [token, setToken] = useState("");
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [recentTracks, setRecentTracks] = useState<RecentTrackItem[]>([]);
 
-  const [mostPlayedTracks, setMostPlayedTracks] = useState<Track[]>([]);
+  const [mostPlayedTracks, setMostReplayedTracks] = useState<Track[]>([])
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    setToken(getToken());
+    const hash = window.location.hash;
+    let token = (window.localStorage.getItem("token") as string) || "";
 
-    const fetchData = async () => {
-      const mostPlayedTracks = await getMostPlayedTracks(token);
-      setMostPlayedTracks(mostPlayedTracks);
-      console.log(mostPlayedTracks);
-    };
-  
-    fetchData();
+    if (!token && hash) {
+      token = hash
+        .substring(1)
+        .split("&")
+        .find((e) => e.startsWith("access_token"))
+        ?.split("=")[1] as string;
+
+      window.location.hash = "";
+      window.localStorage.setItem("token", token);
+    }
+
+    setToken(token || "");
+
+    const getMostPlayedTracks = async () => {
+      const { data } = await axios.get('https://api.spotify.com/v1/me/top/tracks', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          type: "tracks",
+          limit: 6, 
+          time_range: "long_term",
+        },
+      });
+
+      setMostReplayedTracks(data.items);
+    }
+
+    if (token) {
+      getMostPlayedTracks();
+    }
   }, [token]);
 
   const renderMostPlayedTracks = (index: number) => {
     if (!mostPlayedTracks[index] || !mostPlayedTracks[index].album || !mostPlayedTracks[index].album.images[0]) return null;
 
-    return (
-      <div key={mostPlayedTracks[index].id} className="flex flex-row">
-        <img src={mostPlayedTracks[index].album.images[0].url} alt="" className="w-12" />
-        <div className="flex flex-col">
-          <p>{mostPlayedTracks[index].name}</p>
-          <p>{mostPlayedTracks[index].artists[0].name}</p>
-        </div>
+  return (
+    <div key={mostPlayedTracks[index].id} className="flex flex-row">
+      <img src={mostPlayedTracks[index].album.images[0].url} alt="" className="w-12" />
+      <div className="flex flex-col">
+        <p>{mostPlayedTracks[index].name}</p>
+        <p>{mostPlayedTracks[index].artists[0].name}</p>
       </div>
-    );
-  };
-
-  // const renderRecentPlayedTracks = () => {
-  //   console.log("recent-tracks", recentTracks);
-
-  //   return (
-  //     <div>
-  //       {recentTracks.map((item, index) => {
-  //         if (!item.track || !item.track.album || !item.track.name) {
-  //           return null;
-  //         }
-
-  //         return (
-  //           <div key={index}>
-  //             <p>{item.track.name}</p>
-  //           </div>
-  //         );
-  //       })}
-  //     </div>
-  //   );
-  // };
+    </div>
+  );
+  }
 
   const logout = () => {
     window.localStorage.removeItem("token");
@@ -139,7 +119,6 @@ export default function Stats() {
         </div>
         <div className="col-span-2 row-span-1 bg-gray-800"></div>
         <div className="col-span-1 row-span-2 bg-gray-800">
-          {/* {renderRecentPlayedTracks()} */}
         </div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
