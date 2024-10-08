@@ -8,12 +8,14 @@ import Logo from "../assets/Vector.svg";
 import { RecentTrack, Track } from "../types/Track";
 
 import Footer from "../components/footer";
+import getAllTracks from "../utils/tracks/getAllTracks";
 
 export default function Stats() {
   const [token, setToken] = useState("");
 
   const [mostPlayedTracks, setMostReplayedTracks] = useState<Track[]>([])
   const [recentPlayedTracks, setRecentPlayedTracks] = useState<RecentTrack[]>([]);
+  const [numberOfPlayedTracks, setNumberOfPlayedTracks] = useState(0);
 
   const navigate = useNavigate();
 
@@ -62,9 +64,15 @@ export default function Stats() {
       setRecentPlayedTracks(data.items);
     }
 
+    const fetchData = async () => {
+      const numberOfTracks = await getAllTracks(token);
+      setNumberOfPlayedTracks(numberOfTracks);
+    }
+
     if (token) {
       getMostPlayedTracks();
       getRecentPlayedTracks();
+      fetchData();
     }
   }, [token]);
 
@@ -166,7 +174,10 @@ export default function Stats() {
           {renderRecentPlayedTracks()}
         </div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
-        <div className="col-span-1 row-span-1 bg-gray-800"></div>
+        <div className="col-span-1 row-span-1 bg-gray-800">
+          <p>Number of played tracks</p>
+          {numberOfPlayedTracks}
+        </div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
       </div>

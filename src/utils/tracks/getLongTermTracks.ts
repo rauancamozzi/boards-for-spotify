@@ -12,7 +12,7 @@ const getLongTermTracks = async (token: string) => {
     },
   });
 
-  return data.items;
+  return data;
 }
 
 export default getLongTermTracks;
