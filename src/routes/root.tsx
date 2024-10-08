@@ -9,7 +9,11 @@ export default function Root() {
   const REDIRECT_URI = "http://localhost:5173/";
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";
-  const SCOPES = "user-top-read";
+  const SCOPES = [
+    'user-top-read',
+    'user-read-recently-played',
+    'user-read-private',
+  ].join(' '); 
 
   const [token, setToken] = useState("");
   const navigate = useNavigate();
@@ -45,7 +49,7 @@ export default function Root() {
         </div>
 
         <Link
-          to={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPES}`}
+          to={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(SCOPES)}`}
         >
           <button className="bg-stone-950 flex items-center flex-row text-white rounded-[50px] py-2 px-6 border-purple border-[1px] text-center text-base gap-2">
             <SpotifyLogo color="#1ED760" weight="fill" size={32} />
