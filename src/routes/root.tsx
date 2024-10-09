@@ -13,6 +13,7 @@ export default function Root() {
     'user-top-read',
     'user-read-recently-played',
     'user-read-private',
+    'user-library-read',
   ].join(' '); 
 
   const [token, setToken] = useState("");

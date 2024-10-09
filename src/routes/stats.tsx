@@ -17,6 +17,8 @@ export default function Stats() {
   const [recentPlayedTracks, setRecentPlayedTracks] = useState<RecentTrack[]>([]);
   const [numberOfPlayedTracks, setNumberOfPlayedTracks] = useState(0);
 
+  const [savedTracks, setSavedTracks] = useState(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,10 +71,39 @@ export default function Stats() {
       setNumberOfPlayedTracks(numberOfTracks);
     }
 
+    const fetchSavedTracks = async () => {
+      let allTracks: unknown[] = [];
+      let offset = 0;
+      let hasMore = true;
+  
+      try {
+        while (hasMore) {
+          const { data } = await axios.get('https://api.spotify.com/v1/me/tracks', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            params: {
+                limit: 50,
+                offset: offset,
+            },
+          });
+
+          allTracks = allTracks.concat(data.items);
+          offset += 50;
+          hasMore = offset < data.total;
+        }
+        
+        setSavedTracks(allTracks.length);
+      } catch (error) {
+        console.error('Erro ao buscar as músicas salvas:', error);
+      }
+    }
+
     if (token) {
       getMostPlayedTracks();
       getRecentPlayedTracks();
       fetchData();
+      fetchSavedTracks();
     }
   }, [token]);
 
@@ -80,15 +111,16 @@ export default function Stats() {
     if (!mostPlayedTracks[index] || !mostPlayedTracks[index].album || !mostPlayedTracks[index].album.images[0]) return null;
 
     return (
-      <div key={mostPlayedTracks[index].id} className="flex flex-row">
+      <div key={mostPlayedTracks[index].id} className="flex flex-row gap-4">
+        <p>{index}</p>
         <img
           src={mostPlayedTracks[index].album.images[0].url}
           alt=""
           className="w-12"
         />
         <div className="flex flex-col">
-          <p>{mostPlayedTracks[index].name}</p>
-          <p>{mostPlayedTracks[index].artists[0].name}</p>
+          <p className="font-bold">{mostPlayedTracks[index].name}</p>
+          <p className="text-gray-400">{mostPlayedTracks[index].artists[0].name}</p>
         </div>
       </div>
     );
@@ -96,20 +128,20 @@ export default function Stats() {
   
   const renderRecentPlayedTracks = () => {
     return (
-      <div>
+      <div className="flex flex-col gap-4">
         {recentPlayedTracks.map((item, index) => {
           if (!item || !item.track.album || !item.track.name) return null;
   
           return (
-            <div key={index} className="flex flex-row">
+            <div key={index} className="flex flex-row gap-4">
               <img
                 src={item.track.album.images[0].url}
                 alt=""
                 className="w-12"
               />
               <div className="flex flex-col">
-                <p>{item.track.name}</p>
-                <p>{item.track.artists[0].name}</p>
+                <p className="font-bold">{item.track.name}</p>
+                <p className="text-gray-400">{item.track.artists[0].name}</p>
               </div>
             </div>
           );
@@ -147,36 +179,39 @@ export default function Stats() {
       </div>
 
       <div className="w-full h-full grid grid-cols-4 grid-rows-3 bg-gray-900 px-32 gap-2">
-        <div className="grid grid-cols-3 grid-rows-3 col-span-2 row-span-2 bg-gray-800 gap-2">
-          <div className="col-span-2 row-span-2 bg-gray-700">
-            <p>Most played tracks</p>
+        <div className="grid grid-cols-3 grid-rows-3 col-span-2 row-span-2 bg-gray-800 gap-2 text-gray-50">
+          <div className="col-span-2 row-span-2 bg-gray-700 flex flex-col gap-4 p-4">
+            <p className="text-gray-950">Most played tracks</p>
             {renderMostPlayedTracks(0)}
           </div>
-          <div className="col-span-1 row-span-1 bg-gray-700">
+          <div className="col-span-1 row-span-1 bg-gray-700 flex flex-col gap-4 p-4">
             {renderMostPlayedTracks(1)}
           </div>
-          <div className="col-span-1 row-span-1 bg-gray-700">
+          <div className="col-span-1 row-span-1 bg-gray-700 flex flex-col gap-4 p-4">
             {renderMostPlayedTracks(2)}
           </div>
-          <div className="col-span-1 row-span-1 bg-gray-700">
+          <div className="col-span-1 row-span-1 bg-gray-700 flex flex-col gap-4 p-4">
             {renderMostPlayedTracks(3)}
           </div>
-          <div className="col-span-1 row-span-1 bg-gray-700">
+          <div className="col-span-1 row-span-1 bg-gray-700 flex flex-col gap-4 p-4">
             {renderMostPlayedTracks(4)}
           </div>
-          <div className="col-span-1 row-span-1 bg-gray-700">
+          <div className="col-span-1 row-span-1 bg-gray-700 flex flex-col gap-4 p-4">
             {renderMostPlayedTracks(5)}
           </div>
         </div>
         <div className="col-span-2 row-span-1 bg-gray-800"></div>
-        <div className="col-span-1 row-span-2 bg-gray-800">
-          <p>Recent played tracks</p>
+        <div className="col-span-1 row-span-2 bg-gray-700 text-gray-50 flex flex-col gap-4 p-4">
+          <p className="text-gray-950">Recent played tracks</p>
           {renderRecentPlayedTracks()}
         </div>
-        <div className="col-span-1 row-span-1 bg-gray-800"></div>
-        <div className="col-span-1 row-span-1 bg-gray-800">
-          <p>Number of played tracks</p>
-          {numberOfPlayedTracks}
+        <div className="col-span-1 row-span-1 bg-gray-700 text-gray-50 flex flex-col gap-4 p-4">
+          <p className="text-gray-950">Saved tracks</p>
+          <p className="text-9xl text-center font-bold">{savedTracks}</p>
+        </div>
+        <div className="col-span-1 row-span-1 bg-gray-700 text-gray-50 flex flex-col gap-4 p-4">
+          <p className="text-gray-950">Number of played tracks</p>
+          <p className="text-9xl text-center font-bold">{numberOfPlayedTracks}</p>
         </div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
