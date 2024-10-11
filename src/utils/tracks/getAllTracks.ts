@@ -1,28 +1,35 @@
-import getLongTermTracks from "./getLongTermTracks";
-import getMediumTermTracks from "./getMediumTermTracks";
-import getShortTermTracks from "./getShortTermTracks";
-
-interface Track {
-  id: string;
-}
+import axios from "axios";
 
 const getAllTracks = async (token: string) => {
-  const longTerm: { items: Track[] } = await getLongTermTracks(token);
-  const mediumTerm: { items: Track[] } = await getMediumTermTracks(token);
-  const shortTerm: { items: Track[] } = await getShortTermTracks(token);
+    let allTracksArray: unknown[] = [];
+    let offsetAllTracks = 0;
+    let hasMoreTracks = true;
 
-   // Verifica se os resultados possuem a propriedade items e se são arrays
-   if (!longTerm?.items || !mediumTerm?.items || !shortTerm?.items) {
-    throw new Error("Erro ao buscar as tracks. Um dos arrays está indefinido.");
-  }
+    try {
+      while (hasMoreTracks) {
+        const { data } = await axios.get('https://api.spotify.com/v1/me/top/tracks', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            limit: 100,
+            type: "tracks",
+            time_range: "long_term",
+            offset: offsetAllTracks,
+          },
+        });
 
-  const uniqueTracks = [...mediumTerm.items, ...shortTerm.items].filter(
-    (track2) => !longTerm.items.some((track1) => track1.id === track2.id)
-  );
+        allTracksArray = allTracksArray.concat(data.items);
+        offsetAllTracks += 50;
+        hasMoreTracks = offsetAllTracks < data.total;
+      }
 
-  longTerm.items.push(...uniqueTracks);
+    } catch (error) {
+      console.error('Erro ao buscar as todas músicas:', error);
+    }
 
-  return longTerm.items.length;
+
+  return allTracksArray;
 };
 
 export default getAllTracks;

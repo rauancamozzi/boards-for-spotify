@@ -8,7 +8,6 @@ import Logo from "../assets/Vector.svg";
 import { RecentTrack, Track } from "../types/Track";
 
 import Footer from "../components/footer";
-import getAllTracks from "../utils/tracks/getAllTracks";
 
 export default function Stats() {
   const [token, setToken] = useState("");
@@ -18,7 +17,6 @@ export default function Stats() {
   const [numberOfPlayedTracks, setNumberOfPlayedTracks] = useState(0);
 
   const [savedTracks, setSavedTracks] = useState(0);
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,71 +37,108 @@ export default function Stats() {
     setToken(token || "");
 
     const getMostPlayedTracks = async () => {
-      const { data } = await axios.get('https://api.spotify.com/v1/me/top/tracks', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          type: "tracks",
-          limit: 6, 
-          time_range: "long_term",
-        },
-      });
+      const { data } = await axios.get(
+        "https://api.spotify.com/v1/me/top/tracks",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            type: "tracks",
+            limit: 6,
+            time_range: "long_term",
+          },
+        }
+      );
 
       setMostReplayedTracks(data.items);
-    }
+    };
 
     const getRecentPlayedTracks = async () => {
-      const { data } = await axios.get("https://api.spotify.com/v1/me/player/recently-played", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: {
-          limit: 5,
+      const { data } = await axios.get(
+        "https://api.spotify.com/v1/me/player/recently-played",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            limit: 5,
+          },
         }
-      });
-    
+      );
+
       setRecentPlayedTracks(data.items);
-    }
+    };
 
-    const fetchData = async () => {
-      const numberOfTracks = await getAllTracks(token);
-      setNumberOfPlayedTracks(numberOfTracks);
-    }
-
-    const fetchSavedTracks = async () => {
-      let allTracks: unknown[] = [];
+    const getSavedTracks = async () => {
+      let savedTracksArray: unknown[] = [];
       let offset = 0;
       let hasMore = true;
-  
+
       try {
         while (hasMore) {
-          const { data } = await axios.get('https://api.spotify.com/v1/me/tracks', {
-            headers: {
+          const { data } = await axios.get(
+            "https://api.spotify.com/v1/me/tracks",
+            {
+              headers: {
                 Authorization: `Bearer ${token}`,
-            },
-            params: {
+              },
+              params: {
                 limit: 50,
                 offset: offset,
-            },
-          });
+              },
+            }
+          );
 
-          allTracks = allTracks.concat(data.items);
+          savedTracksArray = savedTracksArray.concat(data.items);
           offset += 50;
           hasMore = offset < data.total;
         }
-        
-        setSavedTracks(allTracks.length);
-      } catch (error) {
-        console.error('Erro ao buscar as músicas salvas:', error);
-      }
-    }
 
+        setSavedTracks(savedTracksArray.length);
+      } catch (error) {
+        console.error("Erro ao buscar as músicas salvas:", error);
+      }
+    };
+    
+    const getAllTracks = async () => {
+      let allTracksArray: unknown[] = [];
+      let offsetAllTracks = 0;
+      let hasMoreTracks = true;
+
+      try {
+        while (hasMoreTracks) {
+          const { data } = await axios.get(
+            "https://api.spotify.com/v1/me/top/tracks",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              params: {
+                limit: 50,
+                type: "tracks",
+                time_range: "long_term",
+                offset: offsetAllTracks,
+              },
+            }
+          );
+
+          allTracksArray = allTracksArray.concat(data.items);
+          offsetAllTracks += 50;
+          hasMoreTracks = offsetAllTracks < data.total;
+        }
+
+        setNumberOfPlayedTracks(allTracksArray.length);
+      } catch (error) {
+        console.error("Erro ao buscar as todas músicas:", error);
+      }
+    };
+    
     if (token) {
       getMostPlayedTracks();
       getRecentPlayedTracks();
-      fetchData();
-      fetchSavedTracks();
+      getSavedTracks();
+      getAllTracks();
     }
   }, [token]);
 
