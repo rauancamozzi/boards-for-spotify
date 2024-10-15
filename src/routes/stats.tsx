@@ -8,15 +8,16 @@ import Logo from "../assets/Vector.svg";
 import { RecentTrack, Track } from "../types/Track";
 
 import Footer from "../components/footer";
+import getAllTracks from "../utils/tracks/getAllTracks";
 
 export default function Stats() {
   const [token, setToken] = useState("");
 
   const [mostPlayedTracks, setMostReplayedTracks] = useState<Track[]>([])
   const [recentPlayedTracks, setRecentPlayedTracks] = useState<RecentTrack[]>([]);
-  const [numberOfPlayedTracks, setNumberOfPlayedTracks] = useState(0);
-
+  const [totalPlayedTracks, setTotalPlayedTracks] = useState(0);
   const [savedTracks, setSavedTracks] = useState(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -100,45 +101,28 @@ export default function Stats() {
         console.error("Erro ao buscar as músicas salvas:", error);
       }
     };
-    
-    const getAllTracks = async () => {
-      let allTracksArray: unknown[] = [];
-      let offsetAllTracks = 0;
-      let hasMoreTracks = true;
 
-      try {
-        while (hasMoreTracks) {
-          const { data } = await axios.get(
-            "https://api.spotify.com/v1/me/top/tracks",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              params: {
-                limit: 50,
-                type: "tracks",
-                time_range: "long_term",
-                offset: offsetAllTracks,
-              },
-            }
-          );
+    const getTotalPlayedTracks = async () => {
+      const { data } = await axios.get('https://api.spotify.com/v1/me/top/tracks', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          limit: 50,
+          type: "tracks",
+          time_range: "long_term",
+          offset: 0,
+        },
+      });
 
-          allTracksArray = allTracksArray.concat(data.items);
-          offsetAllTracks += 50;
-          hasMoreTracks = offsetAllTracks < data.total;
-        }
-
-        setNumberOfPlayedTracks(allTracksArray.length);
-      } catch (error) {
-        console.error("Erro ao buscar as todas músicas:", error);
-      }
-    };
+      setTotalPlayedTracks(data.total);
+    }
     
     if (token) {
       getMostPlayedTracks();
       getRecentPlayedTracks();
       getSavedTracks();
-      getAllTracks();
+      getTotalPlayedTracks();
     }
   }, [token]);
 
@@ -246,7 +230,7 @@ export default function Stats() {
         </div>
         <div className="col-span-1 row-span-1 bg-gray-700 text-gray-50 flex flex-col gap-4 p-4">
           <p className="text-gray-950">Number of played tracks</p>
-          <p className="text-9xl text-center font-bold">{numberOfPlayedTracks}</p>
+          <p className="text-9xl text-center font-bold">{totalPlayedTracks}</p>
         </div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>
         <div className="col-span-1 row-span-1 bg-gray-800"></div>

@@ -12,7 +12,7 @@ const getAllTracks = async (token: string) => {
             Authorization: `Bearer ${token}`,
           },
           params: {
-            limit: 100,
+            limit: 50,
             type: "tracks",
             time_range: "long_term",
             offset: offsetAllTracks,
@@ -29,7 +29,7 @@ const getAllTracks = async (token: string) => {
     }
 
 
-  return allTracksArray;
+  return allTracksArray as [];
 };
 
 export default getAllTracks;
